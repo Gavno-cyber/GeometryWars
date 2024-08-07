@@ -9,11 +9,11 @@
 #include <tuple>
 #include <utility> // Äëÿ std::pair
 
-Point::Point(uint32_t x, uint32_t y) : x(x), y(y) {}
+Point::Point(int x, int y) : x(x), y(y) {}
 
-uint32_t Point::squared_distance(const Point& other) const {
-    uint32_t dX = x - other.x;
-    uint32_t dY = y - other.y;
+int Point::squared_distance(const Point& other) const {
+    int dX = x - other.x;
+    int dY = y - other.y;
     return dX * dX + dY * dY;
 }
 
@@ -35,11 +35,11 @@ Triangle::Triangle(Point top, Point left, Point right)
     : top(top), left(left), right(right) {}
 
 void Triangle::draw(Point position, uint32_t color) const {
-    GraphicsEngine::drawPolygon(std::vector<std::pair<int, int>> {
-        {top.x, top.y},  // Vertex 1
-        { left.x, left.y },  // Vertex 2
-        { right.x, right.y }   // Vertex 3
-    }, color);
+    //GraphicsEngine::drawPolygon(std::vector<std::pair<int, int>> {
+    //    {top.x, top.y},  // Vertex 1
+    //    { left.x, left.y },  // Vertex 2
+    //    { right.x, right.y }   // Vertex 3
+    //}, color);
 };
 
 // Circle class

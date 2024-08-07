@@ -147,6 +147,7 @@
     <ClInclude Include="GraphicsEngine.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="PhysicsEngine.h" />
+    <ClInclude Include="PolygonCollisions.h" />
     <ClInclude Include="VelocityComponent.h" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="GameObjects.cpp" />
+    <ClCompile Include="PolygonCollisions.cpp" />
     <ClCompile Include="VelocityComponent.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

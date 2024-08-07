@@ -16,15 +16,13 @@
 #include <tuple>
 #include <utility> // Äëÿ std::pair
 
-
-
 // Point class
 class Point {
 public:
-    uint32_t x, y;
+    int x, y;
 
-    Point(uint32_t x, uint32_t y);
-    uint32_t squared_distance(const Point& other) const;
+    Point(int x, int y);
+    int squared_distance(const Point& other) const;
 };
 
 // Line class

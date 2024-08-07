@@ -13,6 +13,21 @@
 #include <tuple>
 #include <utility> // Äëÿ std::pair
 
+uint32_t* GraphicsEngine::draw_buffer = nullptr;
+
+vec2d Camera::position = vec2d(100, 100);
+float Camera::speed = 10.0f;
+
+void Camera::move(vec2d new_position, float delta) {
+    // Calculate the target position based on the new desired position
+    vec2d target_position = new_position;
+
+    // Calculate the smoothing factor (how quickly the camera moves towards the target)
+    float smooth_factor = speed * delta; // speed is in units per second
+
+    // Use linear interpolation to smoothly move the camera
+    position = vec2d::lerp(position, target_position, smooth_factor);
+}
 
 // Function to create a color from RGB values
 uint32_t GraphicsEngine::create_color(uint8_t r, uint8_t g, uint8_t b) {
@@ -22,49 +37,9 @@ uint32_t GraphicsEngine::create_color(uint8_t r, uint8_t g, uint8_t b) {
 // Clear the backbuffer
 void GraphicsEngine::clear() {
     memset(draw_buffer, 0, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
-    shapes.clear();
 }
 
-void GraphicsEngine::drawPolygon(const std::vector<std::pair<int, int>>& vertices, uint32_t color) {
-    shapes.emplace_back('P', 0, 0, 0, 0, vertices, color);
-}
-// Draw a filled rectangle and store it
-void GraphicsEngine::drawRectangle(int x, int y, int width, int height, uint32_t color) {
-    shapes.emplace_back('R', x, y, width, height, std::vector<std::pair<int, int>>(), color);
-}
-
-// Draw a filled circle and store it
-void GraphicsEngine::drawCircle(int centerX, int centerY, int radius, uint32_t color) {
-    shapes.emplace_back('C', centerX, centerY, radius, 0, std::vector<std::pair<int, int>>(), color);
-}
-
-// Draw a line and store it
 void GraphicsEngine::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
-    shapes.emplace_back('L', x1, y1, x2, y2, std::vector<std::pair<int, int>>(), color);
-}
-
-
-
-// Draw all shapes stored in the vector
-void GraphicsEngine::drawAll() {
-    for (const auto& shape : shapes) {
-        char type = std::get<0>(shape);
-        if (type == 'R') {
-            drawRectangleInternal(std::get<1>(shape), std::get<2>(shape), std::get<3>(shape), std::get<4>(shape), std::get<6>(shape));
-        }
-        else if (type == 'C') {
-            drawCircleInternal(std::get<1>(shape), std::get<2>(shape), std::get<3>(shape), std::get<6>(shape));
-        }
-        else if (type == 'L') {
-            drawLineInternal(std::get<1>(shape), std::get<2>(shape), std::get<3>(shape), std::get<4>(shape), std::get<6>(shape));
-        }
-        else if (type == 'P') {
-            drawPolygonInternal(std::get<5>(shape), std::get<6>(shape));
-        }
-    }
-}
-
-void GraphicsEngine::drawLineInternal(int x1, int y1, int x2, int y2, uint32_t color) {
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
     int sx = (x1 < x2) ? 1 : -1;
@@ -72,9 +47,7 @@ void GraphicsEngine::drawLineInternal(int x1, int y1, int x2, int y2, uint32_t c
     int err = dx - dy;
 
     while (true) {
-        if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT) {
-            draw_buffer[y1 * SCREEN_WIDTH + x1] = color;
-        }
+        Draw(x1, y1, color);
         if (x1 == x2 && y1 == y2) break;
         int err2 = err * 2;
         if (err2 > -dy) { err -= dy; x1 += sx; }
@@ -82,81 +55,79 @@ void GraphicsEngine::drawLineInternal(int x1, int y1, int x2, int y2, uint32_t c
     }
 };
 
-uint32_t* GraphicsEngine::draw_buffer = *buffer;
-std::vector<std::tuple<char, int, int, int, int, std::vector<std::pair<int, int>>, uint32_t>> GraphicsEngine::shapes;
-
-void GraphicsEngine::drawRectangleInternal(int x, int y, int width, int height, uint32_t color) {
-    for (int i = 0; i < width; ++i) {
-        for (int j = 0; j < height; ++j) {
-            if (x + i >= 0 && x + i < SCREEN_WIDTH && y + j >= 0 && y + j < SCREEN_HEIGHT) {
-                draw_buffer[(y + j) * SCREEN_WIDTH + (x + i)] = color;
-            }
+void GraphicsEngine::drawRectangle(int x, int y, int width, int height, uint32_t color) {
+    for (int j = y; j < y + height; ++j) {
+        for (int i = x; i < x + width; ++i) {
+            Draw(i, j, color);
         }
     }
 }
 
-void GraphicsEngine::drawPolygonInternal(const std::vector<std::pair<int, int>>& vertices, uint32_t color) {
-    int numVertices = vertices.size();
-    std::vector<int> edges[SCREEN_HEIGHT];
 
-    // Create edge table
-    for (int i = 0; i < numVertices; ++i) {
-        int x1 = vertices[i].first;
-        int y1 = vertices[i].second;
-        int x2 = vertices[(i + 1) % numVertices].first;
-        int y2 = vertices[(i + 1) % numVertices].second;
+void GraphicsEngine::Draw(int x, int y, uint32_t color) {
+    x -= Camera::position.x;
+    y -= Camera::position.y;
+    if (x >= 0 && x < SCREEN_WIDTH - 1 && y >= 0 && y < SCREEN_HEIGHT - 1)
+        buffer[y][x] = color;
+}
 
-        if (y1 > y2) {
-            std::swap(x1, x2);
-            std::swap(y1, y2);
-        }
+void GraphicsEngine::DrawWOffset(int x, int y, float offset, uint32_t color) {
+    // Determine which layer you are drawing for and adjust accordingly
+    // Calculate adjusted positions based on layer speed
+    int adjustedX = static_cast<int>(x - Camera::position.x * offset);
+    int adjustedY = static_cast<int>(y - Camera::position.y * offset);
 
-        if (y1 == y2) continue; // Ignore horizontal edges
-
-        // Calculate slope
-        float slope = static_cast<float>(x2 - x1) / (y2 - y1);
-
-        // Add edge to edge table
-        for (int y = y1; y < y2; ++y) {
-            int x = static_cast<int>(x1 + slope * (y - y1));
-            edges[y].push_back(x);
-        }
-    }
-
-    // Fill the polygon
-    for (int y = 0; y < SCREEN_HEIGHT; ++y) {
-        if (edges[y].empty()) continue;
-
-        // Sort x-coordinates
-        std::sort(edges[y].begin(), edges[y].end());
-
-        // Fill between pairs of edges
-        for (size_t i = 0; i < edges[y].size(); i += 2) {
-            if (i + 1 < edges[y].size()) {
-                int xStart = edges[y][i];
-                int xEnd = edges[y][i + 1];
-
-                for (int x = xStart; x <= xEnd; ++x) {
-                    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
-                        draw_buffer[y * SCREEN_WIDTH + x] = color;
-                    }
-                }
-            }
-        }
+    // Draw only if within bounds
+    if (adjustedX >= 0 && adjustedX < SCREEN_WIDTH - 1 && adjustedY >= 0 && adjustedY < SCREEN_HEIGHT - 1) {
+        buffer[adjustedY][adjustedX] = color; // Use layer color or texture
     }
 }
 
-void GraphicsEngine::drawCircleInternal(int centerX, int centerY, int radius, uint32_t color) {
+void GraphicsEngine::drawPolygon(const polygon& poly, uint32_t color) {
+
+    int n = poly.p.size();
+    for (int i = 0; i < poly.p.size(); i++)
+        drawLine(poly.p[i].x, poly.p[i].y, poly.p[(i + 1) % poly.p.size()].x, poly.p[(i + 1) % poly.p.size()].y, color);
+    
+    //// Loop through each edge of the polygon
+    //for (int i = 0; i < n; i++) {
+    //    vec2d v1 = poly.p[i];
+    //    vec2d v2 = poly.p[(i + 1) % n];
+    //
+    //    // Ensure v1 is the lower point
+    //    if (v1.y > v2.y) std::swap(v1, v2);
+    //
+    //    // Scanline fill between v1 and v2
+    //    for (int y = static_cast<int>(v1.y); y <= static_cast<int>(v2.y); y++) {
+    //        if (y < 0 || y >= SCREEN_HEIGHT) continue; // Skip out of bounds
+    //
+    //        // Calculate intersection points with the edge
+    //        float x_left = (y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y) + v1.x;
+    //        float x_right = (y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y) + v1.x;
+    //
+    //        // Draw horizontal line between x_left and x_right
+    //        int x_start = static_cast<int>(std::floor(x_left));
+    //        int x_end = static_cast<int>(std::floor(x_right));
+    //
+    //        for (int x = x_start; x <= x_end; x++) {
+    //            if (x >= 0 && x < SCREEN_WIDTH) {
+    //                Draw(x, y, color);
+    //            }
+    //        }
+    //    }
+    //}
+}
+
+void GraphicsEngine::drawCircle(int centerX, int centerY, int radius, uint32_t color) {
     for (int y = -radius; y <= radius; ++y) {
         for (int x = -radius; x <= radius; ++x) {
             if (x * x + y * y <= radius * radius) {
                 int px = centerX + x;
                 int py = centerY + y;
                 if (px >= 0 && px < SCREEN_WIDTH && py >= 0 && py < SCREEN_HEIGHT) {
-                    draw_buffer[py * SCREEN_WIDTH + px] = color;
+                    Draw(px, py, color);
                 }
             }
         }
     }
 }
-

@@ -40,7 +40,7 @@ public:
     float friction;
     float lerpFactor; // Smooth movement factor
 
-    VelocityComponent(Vector2 velocity = Vector2(), float max_speed = 1, float acceleration = 1, float friction = 0.1f, float lerpFactor = 0.1f);
+    VelocityComponent(Vector2 velocity = Vector2(), float max_speed = 1, float acceleration = 0.1f, float friction = 0.1f, float lerpFactor = 0.1f);
 
     void accelerateVelocity(Vector2 velocity, float _acceleration);
 

@@ -6,6 +6,15 @@
 #include <stdint.h>
 #include <vector>
 #include <tuple>
+#include "PolygonCollisions.h"
+
+class Camera {
+public:
+    static vec2d position;
+    static float speed;
+
+    static void move(vec2d new_position, float delta);
+};
 
 class GraphicsEngine {
 public:
@@ -20,7 +29,7 @@ public:
     // Draw a filled rectangle and store it
     static void drawRectangle(int x, int y, int width, int height, uint32_t color);
 
-    static void drawPolygon(const std::vector<std::pair<int, int>>& vertices, uint32_t color);
+    static void drawPolygon(const polygon& poly, uint32_t color);
 
     // Draw a filled circle and store it
     static void drawCircle(int centerX, int centerY, int radius, uint32_t color);
@@ -28,19 +37,9 @@ public:
     // Draw a line and store it
     static void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
 
-    // Draw all shapes stored in the vector
-    static void drawAll();
+    static void Draw(int x, int y, uint32_t color);
 
-private:
-
-
-    static std::vector<std::tuple<char, int, int, int, int, std::vector<std::pair<int, int>>, uint32_t>> shapes;  // Vector to store shapes
-
-    // Private methods for internal drawing operations
-    static void drawRectangleInternal(int x, int y, int width, int height, uint32_t color);
-    static void drawCircleInternal(int centerX, int centerY, int radius, uint32_t color);
-    static void drawLineInternal(int x1, int y1, int x2, int y2, uint32_t color);
-    static void drawPolygonInternal(const std::vector<std::pair<int, int>>& vertices, uint32_t color);
+    static void DrawWOffset(int x, int y, float offset, uint32_t color);
 };
 
 #endif // GRAPHICS_ENGINE_H

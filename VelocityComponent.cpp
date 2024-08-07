@@ -35,7 +35,7 @@ Vector2 Vector2::normalized() const {
     if (len > 0) {
         return *this / len;
     }
-    return Vector2(0, 0);
+    return Vector2(0.0f, 0.0f);
 }
 
 
